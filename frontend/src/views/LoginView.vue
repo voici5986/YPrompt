@@ -18,12 +18,6 @@
         <!-- Linux.do OAuth 登录 -->
         <div v-if="authConfig.linux_do_enabled" class="login-section">
           <button @click="loginWithLinuxDo" class="btn btn-primary btn-linux-do">
-            <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-              <line x1="9" y1="9" x2="9.01" y2="9"/>
-              <line x1="15" y1="9" x2="15.01" y2="9"/>
-            </svg>
             使用 Linux.do 登录
           </button>
         </div>

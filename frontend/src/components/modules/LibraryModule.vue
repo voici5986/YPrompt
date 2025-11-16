@@ -120,19 +120,13 @@
       <!-- 未登录状态 -->
       <div v-else class="h-full flex items-center justify-center">
         <div class="text-center max-w-md px-6">
-          <svg class="w-16 h-16 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-16 h-16 mb-4 text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
           <h2 class="text-2xl font-bold text-gray-800 mb-2">请先登录</h2>
-          <p class="text-gray-600 mb-6">
+          <p class="text-gray-600">
             登录后即可访问您的个人提示词库
           </p>
-          <a 
-            :href="feishuAuthUrl"
-            class="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
-          >
-            前往飞书登录
-          </a>
         </div>
       </div>
     </div>
@@ -236,22 +230,6 @@ const handleCreatePrompt = async (formData: {
     isSaving.value = false
   }
 }
-
-// 飞书授权URL（根据移动端/PC端使用不同参数）
-const feishuAuthUrl = computed(() => {
-  const params = new URLSearchParams({
-    // 移动端使用 lk_mobile_jump_to_browser，PC端使用 lk_jump_to_browser
-    ...(navigationStore.isMobile 
-      ? { lk_mobile_jump_to_browser: 'true' } 
-      : { lk_jump_to_browser: 'true' }
-    ),
-    client_id: import.meta.env.VITE_FEISHU_APP_ID,
-    response_type: 'code',
-    redirect_uri: window.location.origin,
-    scope: 'contact:contact.base:readonly'
-  })
-  return `https://accounts.feishu.cn/open-apis/authen/v1/authorize?${params.toString()}`
-})
 
 // 登出
 const handleLogout = async () => {
