@@ -80,11 +80,42 @@ export const extractArtifact = (text: string): Artifact | null => {
     if (firstBrace !== -1 && lastBrace !== -1) {
       const jsonCandidate = content.substring(firstBrace, lastBrace + 1)
 
+      try {
+        const parsed = JSON.parse(jsonCandidate)
+        const normalized = parsed && typeof parsed === 'object'
+          ? (parsed.mindmap ?? parsed)
+          : null
+
+        if (normalized && typeof normalized === 'object') {
+          const hasTreeStructure =
+            Array.isArray(normalized.children) ||
+            Array.isArray((normalized as any).nodes)
+
+          const hasNaming =
+            !!(normalized as any).name ||
+            !!(normalized as any).title ||
+            !!(parsed as any).mindmap
+
+          if (hasTreeStructure && hasNaming) {
+            return { type: 'mindmap', content: jsonCandidate }
+          }
+        }
+      } catch {
+        // ignore parse errors and fallback to string heuristics
+      }
+
       if (jsonCandidate.includes('"series"') || jsonCandidate.includes('"xAxis"')) {
         return { type: 'echarts', content: jsonCandidate }
       }
 
-      if (jsonCandidate.includes('"children"') && jsonCandidate.includes('"name"')) {
+      if (
+        jsonCandidate.includes('"children"') &&
+        (jsonCandidate.includes('"name"') || jsonCandidate.includes('"title"'))
+      ) {
+        return { type: 'mindmap', content: jsonCandidate }
+      }
+
+      if (jsonCandidate.includes('"mindmap"') && jsonCandidate.includes('"nodes"')) {
         return { type: 'mindmap', content: jsonCandidate }
       }
 

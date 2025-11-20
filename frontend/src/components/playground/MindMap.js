@@ -39,6 +39,36 @@ export default {
         }
         data = JSON.parse(cleanContent);
 
+        // 支持包含 mindmap 根数据的包装格式
+        if (data && data.mindmap) {
+          data = data.mindmap;
+        }
+
+        if (data && data.nodes && !data.children) {
+          data.children = data.nodes;
+        }
+
+        if (data && !data.name && data.title) {
+          data.name = data.title;
+        }
+
+        if (data && Array.isArray(data.children)) {
+          const normalize = (node) => {
+            if (!node) return null;
+            const normalized = {
+              name: node.title || node.name || '节点',
+              children: []
+            };
+            const rawChildren = node.children || node.nodes || [];
+            normalized.children = rawChildren
+              .map(normalize)
+              .filter(Boolean);
+            return normalized;
+          };
+
+          data = normalize({ title: data.title || data.name || 'MindMap', children: data.children });
+        }
+
         // VALIDATION: D3 Tree requires a Root Object, not an Array
         if (Array.isArray(data)) {
              throw new Error("MindMap expects a Root Object { name: '...', children: [...] }, but received an Array.");
