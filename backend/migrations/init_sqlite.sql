@@ -234,3 +234,67 @@ FOR EACH ROW
 BEGIN
   UPDATE prompts SET update_time = CURRENT_TIMESTAMP WHERE id = OLD.id;
 END;
+
+-- ==========================================
+-- 用户AI配置表（新增）
+-- 用于持久化AI提供商和模型配置
+-- ==========================================
+CREATE TABLE IF NOT EXISTS user_ai_configs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  
+  -- AI配置内容(JSON格式) - 存储完整的配置对象
+  -- 数据结构：
+  -- {
+  --   "providers": [
+  --     {
+  --       "id": "custom_xxx",
+  --       "name": "provider name",
+  --       "type": "openai|anthropic|google|custom",
+  --       "apiKey": "sk-xxx",  
+  --       "baseUrl": "https://api.xxx.com",
+  --       "allowCustomUrl": true,
+  --       "enabled": true,
+  --       "models": [
+  --         {
+  --           "id": "model-id",
+  --           "name": "Model Name",
+  --           "enabled": true,
+  --           "apiType": "openai",
+  --           "provider": "custom_xxx",
+  --           "params": {
+  --             "temperature": 1.0,
+  --             "maxTokens": 8192,
+  --             "topP": 0.95,
+  --             "frequencyPenalty": 0,
+  --             "presencePenalty": 0,
+  --             "topK": 0
+  --           },
+  --           "capabilities": {...},
+  --           "testStatus": "success",
+  --           "lastTested": "2024-01-01T00:00:00Z"
+  --         }
+  --       ]
+  --     }
+  --   ],
+  --   "selectedProvider": "custom_xxx",
+  --   "selectedModel": "model-id",
+  --   "streamMode": true,
+  --   "deletedBuiltinProviders": ["openai-builtin"],
+  --   "useSlimRules": false
+  -- }
+  ai_config TEXT DEFAULT NULL,
+  
+  create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+  
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uk_user_ai_config ON user_ai_configs(user_id);
+CREATE TRIGGER IF NOT EXISTS update_user_ai_configs_timestamp 
+AFTER UPDATE ON user_ai_configs
+FOR EACH ROW
+BEGIN
+  UPDATE user_ai_configs SET update_time = CURRENT_TIMESTAMP WHERE id = OLD.id;
+END;

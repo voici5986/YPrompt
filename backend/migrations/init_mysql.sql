@@ -206,4 +206,95 @@ CREATE TABLE `user_sessions` (
   CONSTRAINT `fk_sessions_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户会话表';
 
+-- ----------------------------
+-- 用户提示词规则表
+-- ----------------------------
+DROP TABLE IF EXISTS `user_prompt_rules`;
+CREATE TABLE `user_prompt_rules` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `user_id` INT(11) NOT NULL,
+  
+  -- 提示词规则内容(JSON格式)
+  `system_prompt_rules` TEXT DEFAULT NULL COMMENT '系统提示词规则',
+  `user_guided_prompt_rules` TEXT DEFAULT NULL COMMENT '用户引导提示词规则',
+  `requirement_report_rules` TEXT DEFAULT NULL COMMENT '需求报告规则',
+  `thinking_points_extraction_prompt` TEXT DEFAULT NULL COMMENT '关键指令提取提示词',
+  `thinking_points_system_message` TEXT DEFAULT NULL COMMENT '关键指令系统消息',
+  `system_prompt_generation_prompt` TEXT DEFAULT NULL COMMENT '系统提示词生成提示词',
+  `system_prompt_system_message` TEXT DEFAULT NULL COMMENT '系统提示词系统消息',
+  `optimization_advice_prompt` TEXT DEFAULT NULL COMMENT '优化建议提示词',
+  `optimization_advice_system_message` TEXT DEFAULT NULL COMMENT '优化建议系统消息',
+  `optimization_application_prompt` TEXT DEFAULT NULL COMMENT '优化应用提示词',
+  `optimization_application_system_message` TEXT DEFAULT NULL COMMENT '优化应用系统消息',
+  `quality_analysis_system_prompt` TEXT DEFAULT NULL COMMENT '质量分析系统提示词',
+  `user_prompt_quality_analysis` TEXT DEFAULT NULL COMMENT '用户提示词质量分析',
+  `user_prompt_quick_optimization` TEXT DEFAULT NULL COMMENT '用户提示词快速优化',
+  `user_prompt_rules` TEXT DEFAULT NULL COMMENT '用户提示词规则',
+  
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_prompt_rules` (`user_id`),
+  CONSTRAINT `fk_prompt_rules_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户提示词规则表';
+
+-- ----------------------------
+-- 用户AI配置表（新增）
+-- ----------------------------
+DROP TABLE IF EXISTS `user_ai_configs`;
+CREATE TABLE `user_ai_configs` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `user_id` INT(11) NOT NULL,
+  
+  -- AI配置内容(JSON格式) - 存储完整的配置对象
+  -- 数据结构：
+  -- {
+  --   "providers": [
+  --     {
+  --       "id": "custom_xxx",
+  --       "name": "provider name",
+  --       "type": "openai|anthropic|google|custom",
+  --       "apiKey": "sk-xxx",
+  --       "baseUrl": "https://api.xxx.com",
+  --       "allowCustomUrl": true,
+  --       "enabled": true,
+  --       "models": [
+  --         {
+  --           "id": "model-id",
+  --           "name": "Model Name",
+  --           "enabled": true,
+  --           "apiType": "openai",
+  --           "provider": "custom_xxx",
+  --           "params": {
+  --             "temperature": 1.0,
+  --             "maxTokens": 8192,
+  --             "topP": 0.95,
+  --             "frequencyPenalty": 0,
+  --             "presencePenalty": 0,
+  --             "topK": 0
+  --           },
+  --           "capabilities": {...},
+  --           "testStatus": "success",
+  --           "lastTested": "2024-01-01T00:00:00Z"
+  --         }
+  --       ]
+  --     }
+  --   ],
+  --   "selectedProvider": "custom_xxx",
+  --   "selectedModel": "model-id",
+  --   "streamMode": true,
+  --   "deletedBuiltinProviders": ["openai-builtin"],
+  --   "useSlimRules": false
+  -- }
+  `ai_config` TEXT DEFAULT NULL COMMENT 'AI配置JSON',
+  
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_ai_config` (`user_id`),
+  CONSTRAINT `fk_ai_config_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户AI配置表';
+
 SET FOREIGN_KEY_CHECKS = 1;

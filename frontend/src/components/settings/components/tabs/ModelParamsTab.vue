@@ -212,21 +212,35 @@
         <p class="text-xs text-gray-500">{{ getParamDescription('topK') }}</p>
       </div>
 
-      <!-- 参数说明 -->
-      <div class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-        <h4 class="text-sm font-medium text-gray-900 mb-2">参数说明</h4>
-        <ul class="text-xs text-gray-600 space-y-1">
-          <li v-if="currentApiType === 'openai'">
-            • OpenAI 模型支持: Temperature, Max Tokens, Top P, Frequency Penalty, Presence Penalty
-          </li>
-          <li v-else-if="currentApiType === 'anthropic'">
-            • Claude 模型支持: Temperature, Max Tokens, Top P, Top K
-          </li>
-          <li v-else-if="currentApiType === 'google'">
-            • Gemini 模型支持: Temperature, Max Tokens, Top P, Top K
-          </li>
-          <li class="mt-2">这些参数会在调用 AI 时自动应用，无需手动配置</li>
-        </ul>
+      <!-- 参数说明（可折叠） -->
+      <div class="mt-6 border border-gray-200 rounded-lg overflow-hidden">
+        <button
+          @click="showHelp = !showHelp"
+          class="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between text-sm font-medium text-gray-700"
+        >
+          <span>📖 参数说明</span>
+          <span class="transform transition-transform" :class="{ 'rotate-180': showHelp }">▼</span>
+        </button>
+        <div v-show="showHelp" class="p-4 bg-white border-t border-gray-200">
+          <ul class="text-xs text-gray-600 space-y-2">
+            <li v-if="currentApiType === 'openai'" class="flex items-start">
+              <span class="text-green-600 mr-2">•</span>
+              <span><strong>OpenAI</strong> 支持: Temperature, Max Tokens, Top P, Frequency Penalty, Presence Penalty</span>
+            </li>
+            <li v-else-if="currentApiType === 'anthropic'" class="flex items-start">
+              <span class="text-purple-600 mr-2">•</span>
+              <span><strong>Claude</strong> 支持: Temperature, Max Tokens, Top P, Top K</span>
+            </li>
+            <li v-else-if="currentApiType === 'google'" class="flex items-start">
+              <span class="text-blue-600 mr-2">•</span>
+              <span><strong>Gemini</strong> 支持: Temperature, Max Tokens, Top P, Top K</span>
+            </li>
+            <li class="flex items-start text-gray-500 pt-2 border-t border-gray-100">
+              <span class="mr-2">💡</span>
+              <span>这些参数会在调用 AI 时自动应用，无需手动配置</span>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
@@ -251,6 +265,7 @@ const {
 } = useModelParams()
 
 const params = ref<ModelParams>(getCurrentParams())
+const showHelp = ref(false)  // 控制参数说明的折叠/展开
 
 watch(currentModel, () => {
   params.value = getCurrentParams()

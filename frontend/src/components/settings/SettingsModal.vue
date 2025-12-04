@@ -179,8 +179,4 @@ watch(activeTab, (newTab) => {
     settingsStore.openPromptEditor('system')
   }
 })
-
-onMounted(() => {
-  settingsStore.loadSettings()
-})
 </script>

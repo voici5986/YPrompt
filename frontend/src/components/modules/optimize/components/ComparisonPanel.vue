@@ -479,7 +479,6 @@ onMounted(() => {
       leftModel.value = modelConfig.leftModel || ''
       rightProvider.value = modelConfig.rightProvider || ''
       rightModel.value = modelConfig.rightModel || ''
-      console.log('🟢 加载保存的模型配置:', modelConfig)
     }
   } catch (e) {
     console.error('加载模型配置失败:', e)
@@ -489,7 +488,6 @@ onMounted(() => {
     const savedData = localStorage.getItem('yprompt_comparison_data')
     if (savedData) {
       const data = JSON.parse(savedData)
-      console.log('🟢 ComparisonPanel 加载数据:', data)
       
       // 设置为从优化结果加载
       isFromOptimize.value = true
@@ -512,12 +510,9 @@ onMounted(() => {
         
         // 加载对话上下文(如果有)
         if (data.conversationHistory) {
-          console.log('🟢 加载对话上下文:', data.conversationHistory)
           loadConversationHistory(data.conversationHistory)
         }
       }
-    } else {
-      console.warn('⚠️ 没有找到对比数据，显示默认空白对话框')
     }
   } catch (e) {
     console.error('加载对比数据失败:', e)
@@ -535,7 +530,7 @@ onMounted(() => {
       }
     })
     
-    console.log('🧹 浏览器关闭，已清理所有数据（保留用户信息）')
+    // 已清理所有数据（保留用户信息）
   }
   
   window.addEventListener('beforeunload', handleBeforeUnload)
@@ -609,12 +604,12 @@ const loadConversationHistory = (conversationHistory: string) => {
           timestamp
         })
       })
-      console.log('✅ 对话上下文加载完成（JSON格式）:', messages.length, '条消息')
+      // 对话上下文加载完成（JSON格式）
       return
     }
   } catch (e) {
     // 如果JSON解析失败，尝试旧格式
-    console.log('⚠️ JSON解析失败，尝试旧格式')
+    // JSON解析失败，尝试旧格式
   }
   
   try {
@@ -665,7 +660,7 @@ const loadConversationHistory = (conversationHistory: string) => {
       }
     }
     
-    console.log('✅ 对话上下文加载完成（旧格式）')
+    // 对话上下文加载完成（旧格式）
   } catch (e) {
     console.error('加载对话上下文失败:', e)
   }
@@ -696,7 +691,7 @@ watch([leftProvider, leftModel, rightProvider, rightModel], () => {
     rightModel: rightModel.value
   }
   localStorage.setItem('yprompt_comparison_model_config', JSON.stringify(modelConfig))
-  console.log('💾 保存模型配置:', modelConfig)
+  // 保存模型配置
 })
 
 // 系统提示词保存处理

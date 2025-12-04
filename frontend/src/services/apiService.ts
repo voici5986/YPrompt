@@ -289,3 +289,35 @@ export async function deleteUserPromptRules(fields?: string[]) {
   }
 }
 
+// ============ 用户AI配置相关API ============
+
+export interface AIConfig {
+  providers?: any[]
+  selectedProvider?: string
+  selectedModel?: string
+  streamMode?: boolean
+  deletedBuiltinProviders?: string[]
+  useSlimRules?: boolean
+}
+
+/**
+ * 获取用户的AI配置
+ */
+export async function getUserAIConfig() {
+  return get<{ code: number; data: AIConfig | null; message?: string }>('/api/user-settings/ai-config')
+}
+
+/**
+ * 保存用户的AI配置
+ */
+export async function saveUserAIConfig(config: AIConfig) {
+  return post<{ code: number; data: AIConfig; message: string }>('/api/user-settings/ai-config', config)
+}
+
+/**
+ * 删除用户的AI配置（重置为默认）
+ */
+export async function deleteUserAIConfig() {
+  return del<{ code: number; message: string }>('/api/user-settings/ai-config')
+}
+

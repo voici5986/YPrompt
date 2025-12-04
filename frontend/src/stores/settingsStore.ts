@@ -233,127 +233,219 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
-  // 保存设置到本地存储
-  const saveSettings = () => {
-    // 只保存用户自定义的提供商，不保存内置提供商
+  // 保存到本地localStorage
+  const saveToLocalStorage = () => {
     const userProviders = providers.value.filter(provider => !provider.id.startsWith('builtin_'))
     localStorage.setItem('yprompt_providers', JSON.stringify(userProviders))
     localStorage.setItem('yprompt_selected_provider', selectedProvider.value)
     localStorage.setItem('yprompt_selected_model', selectedModel.value)
     localStorage.setItem('yprompt_stream_mode', JSON.stringify(streamMode.value))
-    // 保存被删除的内置提供商列表
     localStorage.setItem('yprompt_deleted_builtin_providers', JSON.stringify(deletedBuiltinProviders.value))
-    // 保存精简版规则开关
     localStorage.setItem('yprompt_use_slim_rules', JSON.stringify(useSlimRules.value))
   }
 
-  // 从本地存储加载设置
-  const loadSettings = async () => {
-    const savedProviders = localStorage.getItem('yprompt_providers')
-    const savedProvider = localStorage.getItem('yprompt_selected_provider')
-    const savedModel = localStorage.getItem('yprompt_selected_model')
-    const savedStreamMode = localStorage.getItem('yprompt_stream_mode')
-    const savedDeletedBuiltinProviders = localStorage.getItem('yprompt_deleted_builtin_providers')
-    const savedUseSlimRules = localStorage.getItem('yprompt_use_slim_rules')
-
-    // 加载被删除的内置提供商列表
-    if (savedDeletedBuiltinProviders) {
-      try {
-        deletedBuiltinProviders.value = JSON.parse(savedDeletedBuiltinProviders)
-      } catch (error) {
-        deletedBuiltinProviders.value = []
-      }
-    }
-
-    // 首先加载内置提供商（排除被删除的）
-    const builtinProviders = getBuiltinProviders()
-    let allProviders: ProviderConfig[] = []
+  // 保存设置到本地存储和云端
+  const saveSettings = async () => {
+    // 1. 立即保存到localStorage
+    saveToLocalStorage()
     
-    if (builtinProviders.length > 0) {
-      const builtinProviderConfigs = builtinProviders
-        .map(convertBuiltinToProviderConfig)
-        .filter(provider => !deletedBuiltinProviders.value.includes(provider.id))
-      allProviders = [...builtinProviderConfigs]
+    // 2. 保存到云端（如果已登录）
+    try {
+      const token = localStorage.getItem('yprompt_token')
+      if (!token) {
+        return
+      }
       
-      if (deletedBuiltinProviders.value.length > 0) {
+      const { saveUserAIConfig } = await import('@/services/apiService')
+      
+      // 构造完整的配置对象
+      const configData = {
+        providers: providers.value,  // 保存所有提供商（包括内置）
+        selectedProvider: selectedProvider.value,
+        selectedModel: selectedModel.value,
+        streamMode: streamMode.value,
+        deletedBuiltinProviders: deletedBuiltinProviders.value,
+        useSlimRules: useSlimRules.value
       }
+      
+      await saveUserAIConfig(configData)
+    } catch (error) {
+      console.error('[SettingsStore] 云端保存失败:', error)
+      // 失败不影响本地存储，静默处理
     }
+  }
 
-    // 合并用户自定义的提供商配置
-    if (savedProviders) {
-      try {
-        const userProviders = JSON.parse(savedProviders)
-        if (Array.isArray(userProviders)) {
-          // 过滤掉与内置提供商ID冲突的用户配置
-          const nonBuiltinProviders = userProviders.filter((provider: ProviderConfig) => 
-            !provider.id.startsWith('builtin_')
-          )
-          allProviders = [...allProviders, ...nonBuiltinProviders]
+  // 强制从云端重新加载配置（清除 sessionStorage 标记）
+  const forceReloadFromCloud = async (): Promise<boolean> => {
+    sessionStorage.removeItem('yprompt_ai_config_session_loaded')
+    return loadFromCloud()
+  }
+
+  // 从云端加载配置（浏览器会话期间只调用一次）
+  const loadFromCloud = async (): Promise<boolean> => {
+    try {
+      // 检查是否已登录
+      const token = localStorage.getItem('yprompt_token')
+      if (!token) {
+        return false
+      }
+      
+      // 检查本次会话是否已加载过（使用sessionStorage，关闭浏览器后失效）
+      const sessionLoaded = sessionStorage.getItem('yprompt_ai_config_session_loaded')
+      if (sessionLoaded === 'true') {
+        return true
+      }
+      
+      const { getUserAIConfig } = await import('@/services/apiService')
+      const response = await getUserAIConfig()
+      
+      if (response.code === 200 && response.data) {
+        const cloudConfig = response.data
+        
+        // 使用云端配置覆盖响应式状态
+        if (cloudConfig.providers && Array.isArray(cloudConfig.providers)) {
+          providers.value = cloudConfig.providers
         }
-      } catch (error) {
+        if (cloudConfig.selectedProvider) {
+          selectedProvider.value = cloudConfig.selectedProvider
+        }
+        if (cloudConfig.selectedModel) {
+          selectedModel.value = cloudConfig.selectedModel
+        }
+        if (cloudConfig.streamMode !== undefined) {
+          streamMode.value = cloudConfig.streamMode
+        }
+        if (cloudConfig.deletedBuiltinProviders && Array.isArray(cloudConfig.deletedBuiltinProviders)) {
+          deletedBuiltinProviders.value = cloudConfig.deletedBuiltinProviders
+        }
+        if (cloudConfig.useSlimRules !== undefined) {
+          useSlimRules.value = cloudConfig.useSlimRules
+        }
+        
+        // 立即保存到localStorage，确保数据持久化
+        saveToLocalStorage()
+        
+        // 标记本次会话已加载
+        sessionStorage.setItem('yprompt_ai_config_session_loaded', 'true')
+        return true
       }
+      
+      return false
+    } catch (error) {
+      console.error('[SettingsStore] 从云端加载失败:', error)
+      return false
+    }
+  }
+
+  // 从本地存储和云端加载设置
+  const loadSettings = async () => {
+    // 1. 先尝试从云端加载（会话期间只加载一次）
+    const cloudConfigLoaded = await loadFromCloud()
+    
+    // 2. 如果云端没有加载成功，使用localStorage（降级方案）
+    if (!cloudConfigLoaded) {
+      const savedProviders = localStorage.getItem('yprompt_providers')
+      const savedProvider = localStorage.getItem('yprompt_selected_provider')
+      const savedModel = localStorage.getItem('yprompt_selected_model')
+      const savedStreamMode = localStorage.getItem('yprompt_stream_mode')
+      const savedDeletedBuiltinProviders = localStorage.getItem('yprompt_deleted_builtin_providers')
+      const savedUseSlimRules = localStorage.getItem('yprompt_use_slim_rules')
+
+      // 加载被删除的内置提供商列表
+      if (savedDeletedBuiltinProviders) {
+        try {
+          deletedBuiltinProviders.value = JSON.parse(savedDeletedBuiltinProviders)
+        } catch (error) {
+          deletedBuiltinProviders.value = []
+        }
+      }
+
+      // 首先加载内置提供商（排除被删除的）
+      const builtinProviders = getBuiltinProviders()
+      let allProviders: ProviderConfig[] = []
+      
+      if (builtinProviders.length > 0) {
+        const builtinProviderConfigs = builtinProviders
+          .map(convertBuiltinToProviderConfig)
+          .filter(provider => !deletedBuiltinProviders.value.includes(provider.id))
+        allProviders = [...builtinProviderConfigs]
+      }
+
+      // 合并用户自定义的提供商配置
+      if (savedProviders) {
+        try {
+          const userProviders = JSON.parse(savedProviders)
+          if (Array.isArray(userProviders)) {
+            // 过滤掉与内置提供商ID冲突的用户配置
+            const nonBuiltinProviders = userProviders.filter((provider: ProviderConfig) => 
+              !provider.id.startsWith('builtin_')
+            )
+            allProviders = [...allProviders, ...nonBuiltinProviders]
+          }
+        } catch (error) {
+          console.error('解析localStorage提供商失败:', error)
+        }
+      }
+
+      providers.value = allProviders
+
+      if (savedStreamMode) {
+        try {
+          streamMode.value = JSON.parse(savedStreamMode)
+        } catch (error) {
+          streamMode.value = true
+        }
+      }
+
+      // 加载精简版规则开关
+      if (savedUseSlimRules) {
+        try {
+          useSlimRules.value = JSON.parse(savedUseSlimRules)
+        } catch (error) {
+          useSlimRules.value = false
+        }
+      }
+      
+      // 恢复选择
+      if (savedProvider) selectedProvider.value = savedProvider
+      if (savedModel) selectedModel.value = savedModel
     }
 
-    providers.value = allProviders
-
-    if (savedStreamMode) {
-      try {
-        streamMode.value = JSON.parse(savedStreamMode)
-      } catch (error) {
-        streamMode.value = true // 默认开启流式模式
-      }
-    }
-
-    // 加载精简版规则开关
-    if (savedUseSlimRules) {
-      try {
-        useSlimRules.value = JSON.parse(savedUseSlimRules)
-      } catch (error) {
-        useSlimRules.value = false // 默认使用完整版
-      }
-    }
-
-    // 验证并恢复保存的提供商和模型选择
+    // 3. 验证并恢复保存的提供商和模型选择
     const availableProviders = getAvailableProviders()
     let validProviderSelected = false
     let validModelSelected = false
 
-    if (savedProvider) {
-      // 检查保存的提供商是否仍然存在且可用
-      const savedProviderExists = availableProviders.find(p => p.id === savedProvider)
+    if (selectedProvider.value) {
+      const savedProviderExists = availableProviders.find(p => p.id === selectedProvider.value)
       if (savedProviderExists) {
-        selectedProvider.value = savedProvider
         validProviderSelected = true
         
-        // 检查保存的模型是否仍然存在且可用
-        if (savedModel) {
-          const availableModels = getAvailableModels(savedProvider)
-          const savedModelExists = availableModels.find(m => m.id === savedModel)
+        if (selectedModel.value) {
+          const availableModels = getAvailableModels(selectedProvider.value)
+          const savedModelExists = availableModels.find(m => m.id === selectedModel.value)
           if (savedModelExists) {
-            selectedModel.value = savedModel
             validModelSelected = true
           }
         }
       }
     }
 
-    // 自动选择逻辑
+    // 4. 自动选择逻辑
     if (!validProviderSelected && availableProviders.length > 0) {
-      // 自动选择第一个可用的提供商
       selectedProvider.value = availableProviders[0].id
     }
 
     if (selectedProvider.value && !validModelSelected) {
-      // 为当前提供商自动选择第一个可用模型
       const availableModels = getAvailableModels(selectedProvider.value)
       if (availableModels.length > 0) {
         selectedModel.value = availableModels[0].id
       } else {
-        selectedModel.value = '' // 清空无效的模型选择
+        selectedModel.value = ''
       }
     }
 
-    // 从云端加载提示词规则（每次打开浏览器都调用，确保最新）
+    // 5. 从云端加载提示词规则（每次打开浏览器都调用，确保最新）
     try {
       await promptConfigManager.loadFromCloud()
     } catch (error) {
@@ -766,6 +858,9 @@ export const useSettingsStore = defineStore('settings', () => {
     streamMode,
     deletedBuiltinProviders,
     useSlimRules,
+    // AI配置加载方法
+    loadFromCloud,
+    forceReloadFromCloud,
     // 提示词编辑状态
     showPromptEditor,
     editingPromptType,

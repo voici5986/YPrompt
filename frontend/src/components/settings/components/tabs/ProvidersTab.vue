@@ -12,34 +12,42 @@
         </button>
       </div>
     
-      <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <h4 class="text-sm font-medium text-blue-800 mb-2">API配置说明</h4>
-        <div class="text-sm text-blue-700 space-y-2">
-          <div><strong>OpenAI及兼容服务：</strong>API URL填写完整路径，如 <code class="bg-blue-100 px-1 rounded break-all text-xs">https://api.openai.com/v1/chat/completions</code></div>
-          <div><strong>Anthropic Claude：</strong>API URL填写 <code class="bg-blue-100 px-1 rounded break-all text-xs">https://api.anthropic.com/v1/messages</code></div>
-          <div><strong>Google Gemini：</strong>API URL填写 <code class="bg-blue-100 px-1 rounded break-all text-xs">https://generativelanguage.googleapis.com/v1beta</code>（系统会自动根据模型拼接路径）</div>
-          <div><strong>自定义提供商：</strong>大多数第三方服务使用OpenAI兼容格式，URL结构为 <code class="bg-blue-100 px-1 rounded break-all text-xs">https://你的域名/v1/chat/completions</code></div>
-          <div class="text-xs text-blue-600 mt-2">支持代理地址、中转API等各种自定义URL</div>
-        </div>
-        
-        <div class="mt-3 pt-3 border-t border-blue-200">
-          <h4 class="text-sm font-medium text-blue-800 mb-2">附件多模态支持</h4>
-          <div class="text-sm text-blue-700 space-y-1">
-            <div><strong>OpenAI：</strong>支持图片（GPT-4 Vision及更高版本）
-              <div class="text-xs text-blue-600 ml-4">• API支持格式：PNG, JPEG, WEBP, GIF</div>
-              <div class="text-xs text-blue-600 ml-4">• 注意：ChatGPT网页版支持PDF/Office文档，但API不支持</div>
+      <div class="mb-4 border border-blue-200 rounded-lg overflow-hidden">
+        <button
+          @click="showApiHelp = !showApiHelp"
+          class="w-full px-4 py-3 bg-blue-50 hover:bg-blue-100 transition-colors flex items-center justify-between text-sm font-medium text-blue-800"
+        >
+          <span>📖 API配置说明</span>
+          <span class="transform transition-transform" :class="{ 'rotate-180': showApiHelp }">▼</span>
+        </button>
+        <div v-show="showApiHelp" class="p-4 bg-blue-50 border-t border-blue-200">
+          <div class="text-sm text-blue-700 space-y-2">
+            <div><strong>OpenAI及兼容服务：</strong>API URL填写完整路径，如 <code class="bg-blue-100 px-1 rounded break-all text-xs">https://api.openai.com/v1/chat/completions</code></div>
+            <div><strong>Anthropic Claude：</strong>API URL填写 <code class="bg-blue-100 px-1 rounded break-all text-xs">https://api.anthropic.com/v1/messages</code></div>
+            <div><strong>Google Gemini：</strong>API URL填写 <code class="bg-blue-100 px-1 rounded break-all text-xs">https://generativelanguage.googleapis.com/v1beta</code>（系统会自动根据模型拼接路径）</div>
+            <div><strong>自定义提供商：</strong>大多数第三方服务使用OpenAI兼容格式，URL结构为 <code class="bg-blue-100 px-1 rounded break-all text-xs">https://你的域名/v1/chat/completions</code></div>
+            <div class="text-xs text-blue-600 mt-2">支持代理地址、中转API等各种自定义URL</div>
+          </div>
+          
+          <div class="mt-3 pt-3 border-t border-blue-200">
+            <h4 class="text-sm font-medium text-blue-800 mb-2">附件多模态支持</h4>
+            <div class="text-sm text-blue-700 space-y-1">
+              <div><strong>OpenAI：</strong>支持图片（GPT-4 Vision及更高版本）
+                <div class="text-xs text-blue-600 ml-4">• API支持格式：PNG, JPEG, WEBP, GIF</div>
+                <div class="text-xs text-blue-600 ml-4">• 注意：ChatGPT网页版支持PDF/Office文档，但API不支持</div>
+              </div>
+              <div><strong>Anthropic Claude：</strong>支持图片（Claude 3系列）
+                <div class="text-xs text-blue-600 ml-4">• 图片格式：PNG, JPEG, WEBP, GIF</div>
+                <div class="text-xs text-blue-600 ml-4">• PDF文档：Claude 3.5+（最多100页）</div>
+              </div>
+              <div><strong>Google Gemini：</strong>全面支持图片、文档（PDF/Office）、音频、视频等多模态
+                <div class="text-xs text-blue-600 ml-4">• 图片：PNG, JPEG, WEBP, GIF, BMP, TIFF, SVG, HEIC</div>
+                <div class="text-xs text-blue-600 ml-4">• 文档：PDF, Office(Word/Excel/PPT), TXT, Markdown, CSV等</div>
+                <div class="text-xs text-blue-600 ml-4">• 音频：WAV, MP3, AAC, OGG, FLAC</div>
+                <div class="text-xs text-blue-600 ml-4">• 视频：MP4, MOV, AVI, WebM等</div>
+              </div>
+              <div class="text-xs text-blue-600 mt-2">💡 如需上传表格等文档，建议使用 Google Gemini 模型</div>
             </div>
-            <div><strong>Anthropic Claude：</strong>支持图片（Claude 3系列）
-              <div class="text-xs text-blue-600 ml-4">• 图片格式：PNG, JPEG, WEBP, GIF</div>
-              <div class="text-xs text-blue-600 ml-4">• PDF文档：Claude 3.5+（最多100页）</div>
-            </div>
-            <div><strong>Google Gemini：</strong>全面支持图片、文档（PDF/Office）、音频、视频等多模态
-              <div class="text-xs text-blue-600 ml-4">• 图片：PNG, JPEG, WEBP, GIF, BMP, TIFF, SVG, HEIC</div>
-              <div class="text-xs text-blue-600 ml-4">• 文档：PDF, Office(Word/Excel/PPT), TXT, Markdown, CSV等</div>
-              <div class="text-xs text-blue-600 ml-4">• 音频：WAV, MP3, AAC, OGG, FLAC</div>
-              <div class="text-xs text-blue-600 ml-4">• 视频：MP4, MOV, AVI, WebM等</div>
-            </div>
-            <div class="text-xs text-blue-600 mt-2">💡 如需上传表格等文档，建议使用 Google Gemini 模型</div>
           </div>
         </div>
       </div>
@@ -116,6 +124,7 @@
                 v-model="provider.apiKey"
                 type="password"
                 placeholder="输入API密钥"
+                autocomplete="off"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 @input="$emit('save')"
               />
@@ -226,11 +235,13 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { Settings, Plus, CheckCircle, Zap, Square, Trash2, X } from 'lucide-vue-next'
 import type { ProviderConfig } from '@/stores/settingsStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 
 const settingsStore = useSettingsStore()
+const showApiHelp = ref(false)
 
 defineProps<{
   providers: ProviderConfig[]

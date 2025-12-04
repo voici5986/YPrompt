@@ -4,6 +4,7 @@
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 
 export interface User {
   id: number
@@ -17,6 +18,8 @@ export interface User {
 }
 
 export const useAuthStore = defineStore('auth', () => {
+  const router = useRouter()
+  
   // 状态
   const token = ref<string | null>(localStorage.getItem('yprompt_token'))
   const user = ref<User | null>(null)
@@ -84,10 +87,16 @@ export const useAuthStore = defineStore('auth', () => {
         setToken(result.data.token)
         setUser(result.data.user)
         
-        // 登录成功后，强制重新加载云端提示词配置
+        // 登录成功后，强制重新加载云端配置
         try {
+          // 1. 重新加载提示词规则
           const { promptConfigManager } = await import('@/config/prompts')
           await promptConfigManager.forceReloadFromCloud()
+          
+          // 2. 重新加载AI配置
+          const { useSettingsStore } = await import('@/stores/settingsStore')
+          const settingsStore = useSettingsStore()
+          await settingsStore.forceReloadFromCloud()
         } catch (error) {
           console.error('登录后加载云端配置失败:', error)
         }
@@ -123,10 +132,16 @@ export const useAuthStore = defineStore('auth', () => {
         setToken(result.data.token)
         setUser(result.data.user)
         
-        // 登录成功后，强制重新加载云端提示词配置
+        // 登录成功后，强制重新加载云端配置
         try {
+          // 1. 重新加载提示词规则
           const { promptConfigManager } = await import('@/config/prompts')
           await promptConfigManager.forceReloadFromCloud()
+          
+          // 2. 重新加载AI配置
+          const { useSettingsStore } = await import('@/stores/settingsStore')
+          const settingsStore = useSettingsStore()
+          await settingsStore.forceReloadFromCloud()
         } catch (error) {
           console.error('登录后加载云端配置失败:', error)
         }
@@ -300,6 +315,9 @@ export const useAuthStore = defineStore('auth', () => {
         }
       }
     })
+    
+    // 跳转到登录页
+    router.push('/login')
   }
   
   /**

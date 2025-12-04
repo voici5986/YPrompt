@@ -39,6 +39,7 @@
                 type="text"
                 class="form-input"
                 placeholder="请输入用户名"
+                autocomplete="username"
                 :disabled="isSubmitting"
                 required
               />
@@ -53,6 +54,7 @@
                 type="password"
                 class="form-input"
                 placeholder="请输入密码"
+                autocomplete="current-password"
                 :disabled="isSubmitting"
                 required
               />
@@ -94,6 +96,7 @@
                   type="text"
                   class="form-input"
                   placeholder="3-20个字符，字母开头"
+                  autocomplete="username"
                   :disabled="isSubmitting"
                   required
                 />
@@ -107,6 +110,7 @@
                   type="password"
                   class="form-input"
                   placeholder="至少8个字符，包含字母和数字"
+                  autocomplete="new-password"
                   :disabled="isSubmitting"
                   required
                 />
@@ -130,7 +134,7 @@
 
               <button type="submit" class="btn btn-primary btn-block" :disabled="isSubmitting">
                 <span v-if="isSubmitting">注册中...</span>
-                <span v-else">注册</span>
+                <span v-else>注册</span>
               </button>
             </form>
           </div>
